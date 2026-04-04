@@ -1,0 +1,29 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.DotSettings.user
+
+## Logs
+logs/
+*.log
+
+## NuGet
+*.nupkg
+.nuget/
+
+## Docker uploads volume
+uploads/
+
+## Environment
+.env
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+## OS
+.DS_Store
+Thumbs.db
