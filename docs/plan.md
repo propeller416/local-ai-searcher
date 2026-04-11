@@ -1,120 +1,60 @@
-# План реализации AI-Ассистента (локальный RAG)
+# Поэтапный план реализации LocalAiSearcher
 
-## Архитектура
+## 1. MVP: UI-прототип и предварительное тестирование интерфейсов (Этап 0)
+**Цель:** Проверка пользовательского опыта (UX/UI) без интеграции тяжелых зависимостей и реальных ИИ-моделей.
 
-```mermaid
-graph LR
-  BlazorUI["Blazor Server UI"] -->|HTTP| WebAPI["ASP.NET Core API"]
-  WebAPI --> AppLayer["Application Services"]
-  AppLayer --> SK["Semantic Kernel"]
-  SK -->|embeddings/chat| Ollama["Ollama"]
-  AppLayer --> EF["EF Core"]
-  EF --> PG["PostgreSQL + pgvector"]
-  BgService["BackgroundService"] --> AppLayer
-```
+*   **Инициализация проекта:** Создание базового кроссплатформенного Avalonia UI приложения.
+*   **Эмуляция хранилища (Stub-репозиторий):** 
+    *   Создание in-memory сервиса, возвращающего 3-5 фейковых документов с разными статусами (`Completed`, `Processing`, `Pending`).
+*   **Эмуляция загрузки:**
+    *   UI для выбора файлов (PDF, DOCX, TXT).
+    *   Имитация процесса загрузки (задержка `Task.Delay`), без реального сохранения файлов на диск.
+*   **Эмуляция RAG (Stub-чат):**
+    *   Создание интерфейса чата (подобного ChatGPT).
+    *   Заглушка сервиса ответов, возвращающая эхо-ответ: *"Пользователь задал вопрос: [текст вопроса]"*.
+*   **Результат:** Готовый интерфейс, который можно «пощупать», утвердить и использовать как каркас для дальнейшей интеграции логики.
 
-Проект состоит из **одного .NET solution** с четырьмя проектами (Domain, Application, Infrastructure, WebAPI) и Blazor UI как отдельный проект. Всё запускается через Docker Compose.
+## 2. Архитектура и База Данных
+*   **Структура решения (Clean Architecture):** Разделение на Domain, Application, Infrastructure и DesktopApp.
+*   **Настройка SQLite + sqlite-vec:**
+    *   Подключение `Microsoft.Data.Sqlite` и загрузка нативного расширения `sqlite-vec`.
+    *   Создание таблиц: `documents`, `document_chunks` и виртуальной таблицы `chunk_embeddings`.
+
+## 3. Интеграция LLamaSharp (v0.25) и Semantic Kernel
+*   **Зависимости:** Добавление NuGet-пакетов `LLamaSharp`, `LLamaSharp.Backend.Cpu`, `LLamaSharp.semantic-kernel`, `Microsoft.SemanticKernel`.
+*   **Инициализация (Singleton):** 
+    *   Настройка путей к локальным моделям в папке `models/` (входят в поставку).
+    *   Инициализация `LLamaWeights`, `LLamaContext` (для llama3.2-3b) и `LLamaEmbedder` (для nomic-embed-text) при старте приложения (`Program.cs`).
+    *   Регистрация сервисов генерации и эмбеддингов в Semantic Kernel.
+
+## 4. Пайплайн обработки документов (Фоновые задачи)
+*   **Извлечение текста:** Интеграция `UglyToad.PdfPig` (PDF) и `DocumentFormat.OpenXml` (DOCX).
+*   **Чанкинг (ChunkingService):** Разбиение текста на фрагменты (500-1000 символов) с перекрытием.
+*   **Векторизация и сохранение:** Генерация эмбеддингов через `ITextEmbeddingGenerationService` (LLamaSharp) и сохранение чанков вместе с векторами в SQLite.
+*   **Очередь обработки:** Реализация `BackgroundService` с использованием `Channel<Guid>` для асинхронной обработки документов вне основного потока UI.
+
+## 5. Интеграция RAG и Чата
+*   **Векторный поиск:** Реализация поиска косинусного сходства через SQL-запрос (`sqlite-vec`) для нахождения топ-5 релевантных чанков.
+*   **Генерация ответа:** 
+    *   Формирование системного промпта с найденным контекстом.
+    *   Настройка `PromptExecutionSettings` (температура 0.1, лимит токенов).
+    *   Потоковая генерация ответа (`IAsyncEnumerable`) через `IChatCompletionService` и вывод в Avalonia UI.
+*   **Отказ от стабов:** Замена Stub-сервисов (из Этапа 0) на реальные реализации.
+
+## 6. Сборка и Упаковка
+*   **Self-contained публикация:** Компиляция приложения со всеми зависимостями (`.NET runtime`).
+*   **Упаковка моделей:** Включение файлов `nomic-embed-text.gguf` и `llama3.2-3b-q4_k_m.gguf` (около 2.3 GB) в директорию `models/` финального билда.
+*   **Инсталлятор:** Создание кроссплатформенных установщиков с помощью `Velopack`.
 
 ---
 
-## [x] Этап 0: Скаффолдинг проекта
+# Процесс установки продукта пользователем
 
-- Создать структуру solution `RagChat.sln` с проектами:
-  - `src/Domain` (class library) — сущности, перечисления
-  - `src/Application` (class library) — интерфейсы, сервисы, DTO
-  - `src/Infrastructure` (class library) — EF Core, Ollama-коннектор, экстракторы текста, фоновые задачи
-  - `src/WebAPI` (ASP.NET Core 9 web app) — Minimal API endpoints, Program.cs
-  - `src/BlazorUI` (Blazor Server app) — UI
-- Создать `.gitignore` для .NET, `README.md`
-- Добавить NuGet-пакеты:
-  - `Npgsql.EntityFrameworkCore.PostgreSQL`, `Pgvector.EntityFrameworkCore` — для pgvector
-  - `Microsoft.SemanticKernel` — AI-оркестрация
-  - `Serilog.AspNetCore`, `Serilog.Sinks.Console`, `Serilog.Sinks.File` — логирование
-  - `DocumentFormat.OpenXml` — извлечение DOCX
-  - `UglyToad.PdfPig` — извлечение PDF
+Благодаря автономной архитектуре и упаковке через Velopack, установка максимально проста и не требует технических навыков.
 
-## [x] Этап 1: Docker Compose + инфраструктура
-
-- `docker-compose.yml` с сервисами: `postgres` (pgvector/pgvector:pg17), `ollama` (ollama/ollama:latest), `backend`, `frontend`
-- `Dockerfile.backend` — multi-stage build для WebAPI
-- `Dockerfile.frontend` — multi-stage build для BlazorUI
-- Init-скрипт для Ollama (автоматический `ollama pull nomic-embed-text` и `ollama pull llama3.2:3b`)
-
-## [ ] Этап 2: Domain-слой
-
-Файлы в `src/Domain/`:
-
-- `Entities/Document.cs` — id (UUID), filename, file_path, content_type, status, uploaded_at
-- `Entities/DocumentChunk.cs` — id (UUID), document_id (FK), content, embedding (Vector), metadata (jsonb), created_at
-- `Enums/DocumentStatus.cs` — Pending, Processing, Completed, Failed
-
-## [ ] Этап 3: Infrastructure — БД и EF Core
-
-- `Data/AppDbContext.cs` — DbContext с DbSet для Document, DocumentChunk; настройка pgvector
-- `Data/Configurations/DocumentConfiguration.cs` — Fluent API конфигурация
-- `Data/Configurations/DocumentChunkConfiguration.cs` — настройка vector(768), индекс IVFFlat
-- `Data/Repositories/DocumentRepository.cs` — CRUD для документов
-- `Data/Repositories/VectorRepository.cs` — поиск по косинусному сходству (топ-5), сохранение чанков
-- EF Core миграции через `dotnet ef migrations add InitialCreate`
-
-## [ ] Этап 4: Infrastructure — извлечение текста
-
-- `TextExtraction/ITextExtractor.cs` (интерфейс в Application)
-- `TextExtraction/PdfTextExtractor.cs` — через UglyToad.PdfPig
-- `TextExtraction/DocxTextExtractor.cs` — через DocumentFormat.OpenXml
-- `TextExtraction/TextFileExtractor.cs` — для TXT/MD (простое чтение)
-- `TextExtraction/TextExtractorFactory.cs` — выбор экстрактора по content_type
-
-## [ ] Этап 5: Application — сервисы обработки
-
-- `Services/ChunkingService.cs` — разбиение текста на чанки (500-1000 символов, overlap 100-200)
-- `Services/DocumentProcessingService.cs` — оркестрация pipeline: извлечение -> очистка -> чанкинг -> эмбеддинги -> сохранение
-- `Services/RagService.cs` — RAG-цикл: эмбеддинг вопроса -> векторный поиск -> формирование промпта -> LLM -> ответ с источниками
-
-## [ ] Этап 6: Infrastructure — Semantic Kernel + Ollama
-
-- `AI/SemanticKernelSetup.cs` — extension method для регистрации Kernel в DI:
-  - `AddOllamaChatCompletion` для генерации (llama3.2:3b)
-  - `AddOllamaTextEmbeddingGeneration` для эмбеддингов (nomic-embed-text)
-- Конфигурация через `appsettings.json` секция `Ollama` (Endpoint, ChatModel, EmbeddingModel)
-
-## [ ] Этап 7: Infrastructure — фоновая обработка
-
-- `BackgroundJobs/DocumentProcessingBackgroundService.cs`:
-  - `Channel<Guid>` как внутренняя очередь
-  - `BackgroundService` читает из канала и вызывает `DocumentProcessingService`
-  - Обновление статуса документа: Pending -> Processing -> Completed/Failed
-  - Обработка ошибок с логированием
-
-## [ ] Этап 8: WebAPI — эндпоинты
-
-- `Program.cs` — конфигурация DI, Serilog, CORS, Health Checks
-- `Endpoints/DocumentEndpoints.cs` (Minimal API):
-  - `POST /api/documents` — загрузка файла, сохранение на диск, запись в БД, постановка в очередь
-  - `GET /api/documents` — список документов со статусами
-  - `DELETE /api/documents/{id}` — удаление с каскадом
-- `Endpoints/ChatEndpoints.cs`:
-  - `POST /api/chat` — принимает вопрос, вызывает RagService, возвращает ответ + источники
-- Health Checks: PostgreSQL, Ollama connectivity
-
-## [ ] Этап 9: Blazor UI
-
-- `Components/Pages/Documents.razor` — загрузка файлов (drag-and-drop), таблица документов со статусами, кнопка удаления
-- `Components/Pages/Home.razor` — чат-интерфейс в стиле ChatGPT: поле ввода, список сообщений, блок источников
-- `Components/ChatMessage.razor` — компонент одного сообщения (user/assistant)
-- `Components/Shared/MainLayout.razor` — навигация между страницами
-- `Services/ApiClient.cs` — HTTP-клиент для обращения к WebAPI
-
-## [ ] Этап 10: Логирование (Serilog)
-
-- Настройка в `Program.cs` обоих проектов (WebAPI, BlazorUI)
-- Sinks: Console + File (rotating, path `logs/`)
-- Structured logging по всему pipeline (загрузка, обработка, чанкинг, эмбеддинги, поиск, генерация)
-- Request logging middleware
-
-## [ ] Этап 11: Финализация
-
-- Полный README.md с инструкцией запуска
-- `.gitignore` для .NET + Docker
-- Проверка работы всего стека через Docker Compose
-- Тестовый прогон: загрузка PDF -> обработка -> вопрос -> ответ с источниками
+1.  **Скачивание:** Пользователь скачивает один файл-инсталлятор для своей ОС (`.exe` для Windows, `.dmg` для macOS, `.AppImage` для Linux). Размер файла ~2.3 GB, так как он уже содержит внутри себя LLM-модели.
+2.  **Запуск инсталлятора:** Пользователь запускает скачанный файл.
+    *   *Никаких дополнительных загрузок* из интернета не происходит.
+    *   *Установка Docker, Python или баз данных не требуется*.
+3.  **Распаковка:** Инсталлятор автоматически распаковывает приложение и папку `models/` с нейросетями в директорию программы.
+4.  **Запуск:** После установки на рабочем столе появляется ярлык приложения. Пользователь открывает его, и система сразу готова к работе (загрузке документов и чату) в полностью офлайн-режиме.
