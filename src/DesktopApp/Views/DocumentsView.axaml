@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:DesktopApp.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+             x:DataType="vm:DocumentsViewModel"
+             x:Class="DesktopApp.Views.DocumentsView">
+
+  <DockPanel Margin="16">
+    <TextBlock DockPanel.Dock="Top" 
+               Classes="Headline6" 
+               Text="База знаний" 
+               Margin="0,0,0,16"/>
+
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,16">
+      <Button Content="Загрузить документ" 
+              Classes="Outline"
+              Command="{Binding UploadDocumentCommand}" />
+      <ProgressBar IsIndeterminate="True" 
+                   IsVisible="{Binding IsUploading}" 
+                   Width="100" 
+                   VerticalAlignment="Center"/>
+    </StackPanel>
+    
+    <ListBox ItemsSource="{Binding Documents}" Background="Transparent">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <Border CornerRadius="8" 
+                  Background="{DynamicResource MaterialCardBackgroundBrush}" 
+                  Padding="12" Margin="0,4">
+            <Grid ColumnDefinitions="*, Auto, Auto">
+              <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Filename}" 
+                           Classes="Subtitle1" 
+                           TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="{Binding UploadedAt, StringFormat='{}dd.MM.yyyy HH:mm'}" 
+                           Classes="Caption" 
+                           Foreground="{DynamicResource MaterialBodyLightBrush}"
+                           Margin="0,4,0,0"/>
+              </StackPanel>
+              
+              <Border Grid.Column="1" 
+                      CornerRadius="16" 
+                      Background="{DynamicResource MaterialPrimaryMidBrush}"
+                      Padding="8,4" 
+                      Margin="16,0" 
+                      VerticalAlignment="Center">
+                <TextBlock Text="{Binding Status}" 
+                           Classes="Caption" 
+                           Foreground="{DynamicResource MaterialPrimaryMidForegroundBrush}"/>
+              </Border>
+              
+              <Button Grid.Column="2" 
+                      Content="Удалить" 
+                      Classes="Flat"
+                      Foreground="{DynamicResource MaterialValidationErrorBrush}"
+                      Command="{Binding $parent[UserControl].((vm:DocumentsViewModel)DataContext).DeleteDocumentCommand}" 
+                      CommandParameter="{Binding}"
+                      VerticalAlignment="Center"/>
+            </Grid>
+          </Border>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+  </DockPanel>
+</UserControl>
