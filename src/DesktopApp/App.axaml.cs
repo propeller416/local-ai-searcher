@@ -34,6 +34,8 @@ public partial class App : Avalonia.Application
         // Register ViewModels
         services.AddTransient<DocumentsViewModel>();
         services.AddTransient<ChatViewModel>();
+        services.AddTransient<HistoryViewModel>();
+        services.AddTransient<SettingsViewModel>();
         services.AddTransient<MainWindowViewModel>();
 
         Services = services.BuildServiceProvider();

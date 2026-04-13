@@ -9,12 +9,11 @@
 
   <Grid RowDefinitions="Auto, *, Auto">
     
-    <Border Grid.Row="0" 
-            Background="{DynamicResource MaterialPrimaryMidBrush}" 
-            Padding="16">
+    <Border Grid.Row="0" Padding="16, 16, 16, 0">
         <TextBlock Classes="Headline6" 
                    Text="AI-Ассистент" 
-                   Foreground="{DynamicResource MaterialPrimaryMidForegroundBrush}"/>
+                   FontWeight="Bold"
+                   Foreground="#89A595"/>
     </Border>
 
     <ListBox Grid.Row="1" ItemsSource="{Binding Messages}" Background="Transparent" Margin="16" BorderThickness="0">
@@ -57,7 +56,9 @@
                          Width="30" Height="30"
                          Classes="Circular"/>
             <Button Content="ОТПРАВИТЬ" 
-                    Classes="Primary"
+                    Background="#89A595"
+                    Foreground="#FFFFFF"
+                    CornerRadius="8"
                     Command="{Binding SendMessageCommand}"/>
         </StackPanel>
         </Grid>

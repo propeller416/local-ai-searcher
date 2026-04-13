@@ -4,25 +4,76 @@
         xmlns:views="using:DesktopApp.Views"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
         x:Class="DesktopApp.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Local AI Searcher"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="#E3EBD3">
 
-    <Grid ColumnDefinitions="300, *">
-        <!-- Левая панель с документами -->
-        <Border Grid.Column="0" 
-                BorderBrush="{DynamicResource MaterialDividerBrush}" 
-                BorderThickness="0,0,1,0"
-                Background="{DynamicResource MaterialPaperBrush}">
-            <views:DocumentsView DataContext="{Binding DocumentsViewModel}"/>
-        </Border>
-        
-        <!-- Правая панель с чатом -->
-        <Border Grid.Column="1" Background="{DynamicResource MaterialPaperBrush}">
-            <views:ChatView DataContext="{Binding ChatViewModel}"/>
-        </Border>
-    </Grid>
+    <Window.Styles>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="12, 10"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Margin" Value="12, 4"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#B8D3B7"/>
+            <Setter Property="TextBlock.Foreground" Value="#000000"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#AEC5BA"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#D6E5CB"/>
+        </Style>
+    </Window.Styles>
+
+    <SplitView IsPaneOpen="{Binding IsPaneOpen}"
+               DisplayMode="CompactInline"
+               CompactPaneLength="72"
+               OpenPaneLength="240"
+               PaneBackground="Transparent"
+               Background="Transparent">
+        <SplitView.Pane>
+            <Grid RowDefinitions="Auto, *, Auto" Margin="0, 16, 0, 16">
+                <!-- Toggle Button -->
+                <Button Grid.Row="0" Margin="16, 0, 16, 16"
+                        Width="40" Height="40"
+                        CornerRadius="20"
+                        Background="Transparent"
+                        Command="{Binding TogglePaneCommand}">
+                    <materialIcons:MaterialIcon Kind="Menu" Width="24" Height="24" Foreground="#444740"/>
+                </Button>
+
+                <!-- Navigation List -->
+                <ListBox Grid.Row="1" ItemsSource="{Binding MenuItems}" SelectedItem="{Binding SelectedItem}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="16" Background="Transparent">
+                                <materialIcons:MaterialIcon Kind="{Binding Icon}" Width="24" Height="24" Foreground="#444740"/>
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Foreground="#1A1C19" FontWeight="Medium" FontSize="14" IsVisible="{Binding $parent[SplitView].IsPaneOpen}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </SplitView.Pane>
+
+        <SplitView.Content>
+            <!-- Content Area (Right Sidebar) -->
+            <Border Background="#FFFFFF" 
+                    CornerRadius="24"
+                    Margin="0, 16, 16, 16"
+                    BoxShadow="0 2 10 0 #1A000000">
+                <TransitioningContentControl Content="{Binding SelectedItem.ViewModel}" Padding="24" />
+            </Border>
+        </SplitView.Content>
+    </SplitView>
 </Window>
