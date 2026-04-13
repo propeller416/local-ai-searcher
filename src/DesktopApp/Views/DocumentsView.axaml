@@ -11,6 +11,8 @@
     <TextBlock DockPanel.Dock="Top" 
                Classes="Headline6" 
                Text="База знаний" 
+               FontWeight="Bold"
+               Foreground="#89A595"
                Margin="0,0,0,16"/>
 
     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,16">
