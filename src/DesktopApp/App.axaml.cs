@@ -7,10 +7,14 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using DesktopApp.ViewModels;
 using DesktopApp.Views;
+using DesktopApp.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Application.Interfaces;
+using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
 using Infrastructure.Services;
+using Domain.Entities;
 
 namespace DesktopApp;
 
@@ -26,10 +30,19 @@ public partial class App : Avalonia.Application
     public override void OnFrameworkInitializationCompleted()
     {
         var services = new ServiceCollection();
+        
+        services.AddLogging(configure => configure.AddConsole());
 
-        // Register stub services
-        services.AddSingleton<IDocumentRepository, StubDocumentRepository>();
+        // Register Database Service
+        services.AddSingleton<SqliteDatabaseService>(sp => new SqliteDatabaseService("local_ai_searcher.db"));
+        services.AddSingleton<IDatabaseService>(sp => sp.GetRequiredService<SqliteDatabaseService>());
+
+        // Register App Services
+        services.AddSingleton<IDocumentRepository, SqliteDocumentRepository>();
         services.AddSingleton<IRagService, StubRagService>();
+        services.AddSingleton<IFilePickerService, AvaloniaFilePickerService>();
+        services.AddSingleton<IDocumentProcessingQueue, DocumentProcessingQueue>();
+        services.AddSingleton<DocumentProcessingBackgroundService>();
 
         // Register ViewModels
         services.AddTransient<DocumentsViewModel>();
@@ -39,6 +52,14 @@ public partial class App : Avalonia.Application
         services.AddTransient<MainWindowViewModel>();
 
         Services = services.BuildServiceProvider();
+
+        // Initialize Database
+        var dbService = Services.GetRequiredService<IDatabaseService>();
+        dbService.InitializeAsync().GetAwaiter().GetResult();
+
+        // Start Background Service
+        var bgService = Services.GetRequiredService<DocumentProcessingBackgroundService>();
+        _ = bgService.StartAsync(System.Threading.CancellationToken.None);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
