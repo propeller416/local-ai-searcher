@@ -7,6 +7,7 @@ namespace Infrastructure.Data;
 public class SqliteDatabaseService : IDatabaseService
 {
     private readonly string _connectionString;
+    private SqliteConnection? _persistentConnection; // Удерживаем соединение для предотвращения выгрузки vec0.dylib
 
     public SqliteDatabaseService(string databasePath = "database.sqlite")
     {
@@ -20,13 +21,13 @@ public class SqliteDatabaseService : IDatabaseService
 
     public async Task InitializeAsync()
     {
-        using var connection = new SqliteConnection(_connectionString);
-        await connection.OpenAsync();
+        _persistentConnection = new SqliteConnection(_connectionString);
+        await _persistentConnection.OpenAsync();
+        _persistentConnection.LoadExtension("vec0");
 
         // Загружаем расширение vec0 для векторного поиска
-        connection.LoadExtension("vec0");
-
-        var createDocumentsTableCmd = connection.CreateCommand();
+        
+        var createDocumentsTableCmd = _persistentConnection.CreateCommand();
         createDocumentsTableCmd.CommandText = @"
             CREATE TABLE IF NOT EXISTS documents (
                 Id TEXT PRIMARY KEY,
@@ -39,7 +40,7 @@ public class SqliteDatabaseService : IDatabaseService
         ";
         await createDocumentsTableCmd.ExecuteNonQueryAsync();
 
-        var createChunksTableCmd = connection.CreateCommand();
+        var createChunksTableCmd = _persistentConnection.CreateCommand();
         createChunksTableCmd.CommandText = @"
             CREATE TABLE IF NOT EXISTS document_chunks (
                 RowId INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +53,7 @@ public class SqliteDatabaseService : IDatabaseService
         ";
         await createChunksTableCmd.ExecuteNonQueryAsync();
 
-        var createEmbeddingsTableCmd = connection.CreateCommand();
+        var createEmbeddingsTableCmd = _persistentConnection.CreateCommand();
         createEmbeddingsTableCmd.CommandText = @"
             CREATE VIRTUAL TABLE IF NOT EXISTS chunk_embeddings USING vec0(
                 id INTEGER PRIMARY KEY,
@@ -62,7 +63,7 @@ public class SqliteDatabaseService : IDatabaseService
         await createEmbeddingsTableCmd.ExecuteNonQueryAsync();
     }
 
-    public async Task<SqliteConnection> GetConnectionAsync(bool loadVecExtension = false)
+    public async Task<SqliteConnection> GetConnectionAsync(bool loadVecExtension = true)
     {
         var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync();
