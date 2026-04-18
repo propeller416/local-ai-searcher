@@ -11,6 +11,8 @@ namespace DesktopApp.ViewModels;
 public partial class DocumentsViewModel : ViewModelBase
 {
     private readonly IDocumentRepository _repository;
+    private readonly IFilePickerService _filePickerService;
+    private readonly IDocumentProcessingQueue _processingQueue;
 
     [ObservableProperty]
     private ObservableCollection<Document> _documents = new();
@@ -18,9 +20,14 @@ public partial class DocumentsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isUploading;
 
-    public DocumentsViewModel(IDocumentRepository repository)
+    public DocumentsViewModel(
+        IDocumentRepository repository,
+        IFilePickerService filePickerService,
+        IDocumentProcessingQueue processingQueue)
     {
         _repository = repository;
+        _filePickerService = filePickerService;
+        _processingQueue = processingQueue;
         LoadDocumentsCommand.Execute(null);
     }
 
@@ -38,24 +45,57 @@ public partial class DocumentsViewModel : ViewModelBase
     [RelayCommand]
     private async Task UploadDocumentAsync()
     {
+        var files = await _filePickerService.OpenFilePickerAsync("Выберите документы", true);
+        if (files == null || files.Count == 0)
+            return;
+
         IsUploading = true;
 
-        // Stub upload process
-        await Task.Delay(1500); 
-
-        var newDoc = new Document
+        try
         {
-            Id = Guid.NewGuid(),
-            Filename = $"Новый_документ_{DateTime.Now.Ticks}.txt",
-            ContentType = "text/plain",
-            Status = Domain.Enums.DocumentStatus.Pending,
-            UploadedAt = DateTime.Now
-        };
+            var appDataPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "documents");
+            if (!System.IO.Directory.Exists(appDataPath))
+            {
+                System.IO.Directory.CreateDirectory(appDataPath);
+            }
 
-        await _repository.AddAsync(newDoc);
-        Documents.Add(newDoc);
+            foreach (var filePath in files)
+            {
+                var fileInfo = new System.IO.FileInfo(filePath);
+                var newId = Guid.NewGuid();
+                var newExtension = fileInfo.Extension;
+                var destFileName = $"{newId}{newExtension}";
+                var destFilePath = System.IO.Path.Combine(appDataPath, destFileName);
 
-        IsUploading = false;
+                // Копируем файл
+                System.IO.File.Copy(filePath, destFilePath, true);
+
+                var newDoc = new Document
+                {
+                    Id = newId,
+                    Filename = fileInfo.Name,
+                    FilePath = destFilePath,
+                    ContentType = newExtension,
+                    Status = Domain.Enums.DocumentStatus.Pending,
+                    UploadedAt = DateTime.Now
+                };
+
+                await _repository.AddAsync(newDoc);
+                Documents.Insert(0, newDoc);
+
+                // Отправляем в очередь обработки
+                await _processingQueue.QueueDocumentAsync(newDoc.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            // TODO: Handle error properly
+            Console.WriteLine($"Upload failed: {ex}");
+        }
+        finally
+        {
+            IsUploading = false;
+        }
     }
 
     [RelayCommand]

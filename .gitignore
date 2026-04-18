@@ -6,6 +6,7 @@ obj/
 .vs/
 .idea/
 *.DotSettings.user
+local_ai_searcher.db
 
 ## Logs
 logs/
