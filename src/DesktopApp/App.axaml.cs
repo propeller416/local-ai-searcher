@@ -11,6 +11,7 @@ using DesktopApp.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Application.Interfaces;
+using Infrastructure;
 using Infrastructure.Data;
 using Infrastructure.Data.Repositories;
 using Infrastructure.Services;
@@ -37,9 +38,11 @@ public partial class App : Avalonia.Application
         services.AddSingleton<SqliteDatabaseService>(sp => new SqliteDatabaseService("local_ai_searcher.db"));
         services.AddSingleton<IDatabaseService>(sp => sp.GetRequiredService<SqliteDatabaseService>());
 
+        services.AddLlamaAndSemanticKernelServices();
+
         // Register App Services
         services.AddSingleton<IDocumentRepository, SqliteDocumentRepository>();
-        services.AddSingleton<IRagService, StubRagService>();
+        services.AddSingleton<IRagService, KernelChatRagService>();
         services.AddSingleton<IFilePickerService, AvaloniaFilePickerService>();
         services.AddSingleton<IDocumentProcessingQueue, DocumentProcessingQueue>();
         services.AddSingleton<DocumentProcessingBackgroundService>();

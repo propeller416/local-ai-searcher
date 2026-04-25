@@ -8,6 +8,9 @@ obj/
 *.DotSettings.user
 local_ai_searcher.db
 
+## Локальные веса LLM (в релиз кладутся отдельно / CI; не коммитить)
+models/*.gguf
+
 ## Logs
 logs/
 *.log
