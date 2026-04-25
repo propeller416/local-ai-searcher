@@ -6,7 +6,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 namespace Infrastructure.Services;
 
 /// <summary>Пока без поиска по документам: ответ через локальную LLM (Semantic Kernel). RAG подключится позже.</summary>
-public sealed class KernelChatRagService(IChatCompletionService chatCompletion) : IRagService
+public sealed class KernelChatRagService(Lazy<IChatCompletionService> chatCompletion) : IRagService
 {
     public async Task<ChatResponse> AskAsync(string question)
     {
@@ -15,7 +15,7 @@ public sealed class KernelChatRagService(IChatCompletionService chatCompletion) 
             var history = new ChatHistory("Ты — ассистент Local AI Searcher. Отвечай кратко и по делу на русском языке.");
             history.AddUserMessage(question);
 
-            var contents = await chatCompletion.GetChatMessageContentsAsync(history).ConfigureAwait(false);
+            var contents = await chatCompletion.Value.GetChatMessageContentsAsync(history).ConfigureAwait(false);
             var answer = contents is { Count: > 0 }
                 ? contents[^1].Content ?? string.Empty
                 : string.Empty;
