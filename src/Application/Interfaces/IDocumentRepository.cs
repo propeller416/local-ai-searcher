@@ -9,4 +9,5 @@ public interface IDocumentRepository
     Task DeleteAsync(Guid id);
     Task AddAsync(Document doc);
     Task UpdateAsync(Document doc);
+    Task SaveChunksAsync(Guid documentId, List<DocumentChunk> chunks, List<float[]> embeddings);
 }

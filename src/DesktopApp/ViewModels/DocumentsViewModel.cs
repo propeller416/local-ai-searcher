@@ -20,6 +20,9 @@ public partial class DocumentsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isUploading;
 
+    [ObservableProperty]
+    private string _errorMessage = string.Empty;
+
     public DocumentsViewModel(
         IDocumentRepository repository,
         IFilePickerService filePickerService,
@@ -50,6 +53,7 @@ public partial class DocumentsViewModel : ViewModelBase
             return;
 
         IsUploading = true;
+        ErrorMessage = string.Empty;
 
         try
         {
@@ -62,8 +66,15 @@ public partial class DocumentsViewModel : ViewModelBase
             foreach (var filePath in files)
             {
                 var fileInfo = new System.IO.FileInfo(filePath);
+                var newExtension = fileInfo.Extension.ToLowerInvariant();
+                
+                if (newExtension != ".pdf" && newExtension != ".docx" && newExtension != ".txt")
+                {
+                    ErrorMessage = $"Программа не умеет работать с форматом {newExtension}. Поддерживаются только: .pdf, .docx, .txt";
+                    continue;
+                }
+
                 var newId = Guid.NewGuid();
-                var newExtension = fileInfo.Extension;
                 var destFileName = $"{newId}{newExtension}";
                 var destFilePath = System.IO.Path.Combine(appDataPath, destFileName);
 
@@ -89,7 +100,7 @@ public partial class DocumentsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            // TODO: Handle error properly
+            ErrorMessage = $"Ошибка при загрузке: {ex.Message}";
             Console.WriteLine($"Upload failed: {ex}");
         }
         finally
