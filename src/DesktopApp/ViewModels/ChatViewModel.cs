@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -6,10 +7,13 @@ using System.Threading.Tasks;
 
 namespace DesktopApp.ViewModels;
 
-public class ChatMessage
+public partial class ChatMessage : ObservableObject
 {
-    public string Role { get; set; } = string.Empty;
-    public string Text { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string _role = string.Empty;
+
+    [ObservableProperty]
+    private string _text = string.Empty;
 }
 
 public partial class ChatViewModel : ViewModelBase
@@ -56,10 +60,28 @@ public partial class ChatViewModel : ViewModelBase
         
         IsThinking = true;
 
-        var response = await _ragService.AskAsync(question);
+        var aiMessage = new ChatMessage { Role = "AI", Text = string.Empty };
+        Messages.Add(aiMessage);
 
-        Messages.Add(new ChatMessage { Role = "AI", Text = response.Answer });
-
-        IsThinking = false;
+        try
+        {
+            await foreach (var chunk in _ragService.AskStreamAsync(question))
+            {
+                aiMessage.Text += chunk;
+            }
+            
+            if (string.IsNullOrWhiteSpace(aiMessage.Text))
+            {
+                aiMessage.Text = "Пустой ответ модели.";
+            }
+        }
+        catch (Exception ex)
+        {
+            aiMessage.Text = $"Произошла ошибка: {ex.Message}";
+        }
+        finally
+        {
+            IsThinking = false;
+        }
     }
 }

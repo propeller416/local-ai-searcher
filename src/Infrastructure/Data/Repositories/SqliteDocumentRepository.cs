@@ -191,4 +191,35 @@ public class SqliteDocumentRepository : IDocumentRepository
             throw;
         }
     }
+
+    public async Task<List<string>> SearchSimilarChunksAsync(float[] queryEmbedding, int limit = 5)
+    {
+        var results = new List<string>();
+        using var connection = await _dbService.GetConnectionAsync();
+        using var command = connection.CreateCommand();
+        
+        command.CommandText = @"
+            SELECT dc.Text, d.Filename 
+            FROM chunk_embeddings ce
+            JOIN document_chunks dc ON ce.id = dc.RowId
+            JOIN documents d ON dc.DocumentId = d.Id
+            WHERE ce.embedding MATCH @QueryEmbedding AND k = @Limit
+            ORDER BY distance";
+            
+        var embeddingBytes = new byte[queryEmbedding.Length * sizeof(float)];
+        Buffer.BlockCopy(queryEmbedding, 0, embeddingBytes, 0, embeddingBytes.Length);
+        
+        command.Parameters.AddWithValue("@QueryEmbedding", embeddingBytes);
+        command.Parameters.AddWithValue("@Limit", limit);
+        
+        using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var text = reader.GetString(0);
+            var filename = reader.GetString(1);
+            results.Add($"[Документ: {filename}]\n{text}");
+        }
+        
+        return results;
+    }
 }
