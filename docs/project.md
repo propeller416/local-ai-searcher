@@ -18,6 +18,5 @@
 
 **Current Status:**
 
-- 3 phase development. 
-- Implementation plan created (`docs/plan.md`). 
+- 3 phase developed by implementation plan created (`docs/plan.md`).
 

@@ -20,10 +20,16 @@ public static class DependencyInjectionExtensions
 
         services.AddSingleton(sp =>
             sp.GetRequiredService<Kernel>().GetRequiredService<IChatCompletionService>());
+            
+        services.AddSingleton(sp => new Lazy<IChatCompletionService>(() => 
+            sp.GetRequiredService<Kernel>().GetRequiredService<IChatCompletionService>()));
 
 #pragma warning disable CS0618
         services.AddSingleton(sp =>
             sp.GetRequiredService<Kernel>().GetRequiredService<ITextEmbeddingGenerationService>());
+            
+        services.AddSingleton(sp => new Lazy<ITextEmbeddingGenerationService>(() => 
+            sp.GetRequiredService<Kernel>().GetRequiredService<ITextEmbeddingGenerationService>()));
 #pragma warning restore CS0618
 
         return services;

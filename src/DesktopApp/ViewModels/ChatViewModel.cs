@@ -25,10 +25,22 @@ public partial class ChatViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isThinking;
 
-    public ChatViewModel(IRagService ragService)
+    public ChatViewModel(IRagService ragService, Infrastructure.Llama.LlamaConfig config)
     {
         _ragService = ragService;
-        Messages.Add(new ChatMessage { Role = "AI", Text = "Привет! Я Local AI Searcher. Задайте мне вопрос по вашим документам." });
+        
+        if (!System.IO.File.Exists(config.ChatModelPath) || !System.IO.File.Exists(config.EmbedModelPath))
+        {
+            Messages.Add(new ChatMessage 
+            { 
+                Role = "AI", 
+                Text = "⚠️ Внимание: Модели не найдены! Пожалуйста, скачайте необходимые GGUF файлы в папку models. Без них приложение не сможет генерировать ответы." 
+            });
+        }
+        else
+        {
+            Messages.Add(new ChatMessage { Role = "AI", Text = "Привет! Я Local AI Searcher. Задайте мне вопрос по вашим документам." });
+        }
     }
 
     [RelayCommand]
