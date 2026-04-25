@@ -102,9 +102,93 @@ public class SqliteDocumentRepository : IDocumentRepository
     public async Task DeleteAsync(Guid id)
     {
         using var connection = await _dbService.GetConnectionAsync();
-        using var command = connection.CreateCommand();
-        command.CommandText = "DELETE FROM documents WHERE Id = @Id";
-        command.Parameters.AddWithValue("@Id", id.ToString());
-        await command.ExecuteNonQueryAsync();
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            // Delete vectors first
+            using var deleteVectorsCmd = connection.CreateCommand();
+            deleteVectorsCmd.Transaction = transaction;
+            deleteVectorsCmd.CommandText = @"
+                DELETE FROM chunk_embeddings 
+                WHERE id IN (SELECT RowId FROM document_chunks WHERE DocumentId = @Id)";
+            deleteVectorsCmd.Parameters.AddWithValue("@Id", id.ToString());
+            await deleteVectorsCmd.ExecuteNonQueryAsync();
+
+            // Delete chunks
+            using var deleteChunksCmd = connection.CreateCommand();
+            deleteChunksCmd.Transaction = transaction;
+            deleteChunksCmd.CommandText = "DELETE FROM document_chunks WHERE DocumentId = @Id";
+            deleteChunksCmd.Parameters.AddWithValue("@Id", id.ToString());
+            await deleteChunksCmd.ExecuteNonQueryAsync();
+
+            // Delete document
+            using var deleteDocCmd = connection.CreateCommand();
+            deleteDocCmd.Transaction = transaction;
+            deleteDocCmd.CommandText = "DELETE FROM documents WHERE Id = @Id";
+            deleteDocCmd.Parameters.AddWithValue("@Id", id.ToString());
+            await deleteDocCmd.ExecuteNonQueryAsync();
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public async Task SaveChunksAsync(Guid documentId, List<DocumentChunk> chunks, List<float[]> embeddings)
+    {
+        if (chunks.Count != embeddings.Count)
+            throw new ArgumentException("Chunks and embeddings count must match.");
+
+        using var connection = await _dbService.GetConnectionAsync();
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            for (int i = 0; i < chunks.Count; i++)
+            {
+                var chunk = chunks[i];
+                var embedding = embeddings[i];
+
+                using var insertChunkCmd = connection.CreateCommand();
+                insertChunkCmd.Transaction = transaction;
+                insertChunkCmd.CommandText = @"
+                    INSERT INTO document_chunks (Id, DocumentId, Text, ChunkIndex)
+                    VALUES (@Id, @DocumentId, @Text, @ChunkIndex)
+                    RETURNING RowId";
+                
+                insertChunkCmd.Parameters.AddWithValue("@Id", chunk.Id.ToString());
+                insertChunkCmd.Parameters.AddWithValue("@DocumentId", chunk.DocumentId.ToString());
+                insertChunkCmd.Parameters.AddWithValue("@Text", chunk.Text);
+                insertChunkCmd.Parameters.AddWithValue("@ChunkIndex", chunk.ChunkIndex);
+                
+                var rowIdObj = await insertChunkCmd.ExecuteScalarAsync();
+                if (rowIdObj == null) throw new Exception("Failed to insert chunk");
+                var rowId = Convert.ToInt64(rowIdObj);
+
+                using var insertEmbeddingCmd = connection.CreateCommand();
+                insertEmbeddingCmd.Transaction = transaction;
+                insertEmbeddingCmd.CommandText = @"
+                    INSERT INTO chunk_embeddings (id, embedding)
+                    VALUES (@Id, @Embedding)";
+                
+                insertEmbeddingCmd.Parameters.AddWithValue("@Id", rowId);
+                
+                var embeddingBytes = new byte[embedding.Length * sizeof(float)];
+                Buffer.BlockCopy(embedding, 0, embeddingBytes, 0, embeddingBytes.Length);
+                
+                insertEmbeddingCmd.Parameters.AddWithValue("@Embedding", embeddingBytes);
+                
+                await insertEmbeddingCmd.ExecuteNonQueryAsync();
+            }
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 }

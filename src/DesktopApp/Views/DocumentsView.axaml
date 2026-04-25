@@ -23,6 +23,11 @@
                    IsVisible="{Binding IsUploading}" 
                    Width="100" 
                    VerticalAlignment="Center"/>
+      <TextBlock Text="{Binding ErrorMessage}" 
+                 Classes="Body2" 
+                 Foreground="{DynamicResource MaterialValidationErrorBrush}"
+                 VerticalAlignment="Center"
+                 IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </StackPanel>
     
     <ListBox ItemsSource="{Binding Documents}" Background="Transparent">
@@ -36,6 +41,11 @@
                 <TextBlock Text="{Binding Filename}" 
                            Classes="Subtitle1" 
                            TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="{Binding FilePath}" 
+                           Classes="Caption" 
+                           Foreground="{DynamicResource MaterialBodyLightBrush}"
+                           TextTrimming="CharacterEllipsis"
+                           Margin="0,2,0,0"/>
                 <TextBlock Text="{Binding UploadedAt, StringFormat='{}dd.MM.yyyy HH:mm'}" 
                            Classes="Caption" 
                            Foreground="{DynamicResource MaterialBodyLightBrush}"

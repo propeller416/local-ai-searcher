@@ -45,6 +45,7 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IRagService, KernelChatRagService>();
         services.AddSingleton<IFilePickerService, AvaloniaFilePickerService>();
         services.AddSingleton<IDocumentProcessingQueue, DocumentProcessingQueue>();
+        services.AddSingleton<DocumentProcessorService>();
         services.AddSingleton<DocumentProcessingBackgroundService>();
 
         // Register ViewModels
