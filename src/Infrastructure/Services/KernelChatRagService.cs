@@ -9,9 +9,10 @@ namespace Infrastructure.Services;
 public sealed class KernelChatRagService(
     Lazy<IChatCompletionService> chatCompletion,
     Lazy<ITextEmbeddingGenerationService> textEmbedding,
-    IDocumentRepository documentRepository) : IRagService
+    IDocumentRepository documentRepository,
+    Infrastructure.Llama.LlamaConfig config) : IRagService
 {
-    public async IAsyncEnumerable<string> AskStreamAsync(string question)
+    public async IAsyncEnumerable<RagResponseChunk> AskStreamAsync(string question)
     {
         ReadOnlyMemory<float> queryEmbedding = default;
         string? errorMessage = null;
@@ -29,7 +30,7 @@ public sealed class KernelChatRagService(
 
         if (errorMessage != null)
         {
-            yield return errorMessage;
+            yield return new RagResponseChunk { Text = errorMessage };
             yield break;
         }
 
@@ -45,13 +46,12 @@ public sealed class KernelChatRagService(
 
         if (errorMessage != null)
         {
-            yield return errorMessage;
+            yield return new RagResponseChunk { Text = errorMessage };
             yield break;
         }
 
         var contextText = string.Join("\n\n", similarChunks);
         var systemPrompt = $@"Ты — ассистент для поиска по документации. Отвечай на вопросы пользователя на русском языке, используя только предоставленный контекст. Если в контексте нет ответа, скажи об этом.
-Обязательно добавляй в свой ответ ссылки на документы, из которых была взята информация. Ссылка должна быть в формате: [Документ: имя_файла].
 
 Контекст:
 {contextText}";
@@ -63,8 +63,8 @@ public sealed class KernelChatRagService(
         {
             ExtensionData = new Dictionary<string, object>
             {
-                { "temperature", 0.1 },
-                { "max_tokens", 1024 }
+                { "temperature", config.Temperature },
+                { "max_tokens", config.MaxTokens }
             }
         };
 
@@ -80,7 +80,7 @@ public sealed class KernelChatRagService(
 
         if (errorMessage != null || streamingResult == null)
         {
-            yield return errorMessage ?? "Неизвестная ошибка при запуске генерации.";
+            yield return new RagResponseChunk { Text = errorMessage ?? "Неизвестная ошибка при запуске генерации." };
             yield break;
         }
 
@@ -88,17 +88,40 @@ public sealed class KernelChatRagService(
         {
             if (!string.IsNullOrEmpty(chunk.Content))
             {
-                yield return chunk.Content;
+                yield return new RagResponseChunk { Text = chunk.Content };
             }
         }
 
         if (similarChunks.Count > 0)
         {
-            yield return "\n\n---\n**Найденные фрагменты:**\n\n";
-            for (int i = 0; i < similarChunks.Count; i++)
+            var sources = new List<RagSource>();
+            foreach (var chunk in similarChunks)
             {
-                yield return $"{i + 1}. {similarChunks[i]}\n\n";
+                var docName = "Неизвестно";
+                var text = chunk;
+
+                if (chunk.StartsWith("[Документ: "))
+                {
+                    var endIndex = chunk.IndexOf("]\n");
+                    if (endIndex != -1)
+                    {
+                        docName = chunk.Substring(11, endIndex - 11);
+                        text = chunk.Substring(endIndex + 2);
+                    }
+                }
+                
+                sources.Add(new RagSource
+                {
+                    DocumentName = docName,
+                    Text = text
+                });
             }
+
+            yield return new RagResponseChunk
+            {
+                Text = string.Empty,
+                Sources = sources
+            };
         }
     }
 }

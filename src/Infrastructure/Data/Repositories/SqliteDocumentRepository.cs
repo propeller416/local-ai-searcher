@@ -199,7 +199,7 @@ public class SqliteDocumentRepository : IDocumentRepository
         using var command = connection.CreateCommand();
         
         command.CommandText = @"
-            SELECT dc.Text, d.Filename 
+            SELECT dc.Text, d.FilePath 
             FROM chunk_embeddings ce
             JOIN document_chunks dc ON ce.id = dc.RowId
             JOIN documents d ON dc.DocumentId = d.Id
@@ -216,8 +216,8 @@ public class SqliteDocumentRepository : IDocumentRepository
         while (await reader.ReadAsync())
         {
             var text = reader.GetString(0);
-            var filename = reader.GetString(1);
-            results.Add($"[Документ: {filename}]\n{text}");
+            var filepath = reader.GetString(1);
+            results.Add($"[Документ: {filepath}]\n... {text} ...");
         }
         
         return results;
