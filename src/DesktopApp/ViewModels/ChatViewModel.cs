@@ -1,15 +1,54 @@
+using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Application.Interfaces;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace DesktopApp.ViewModels;
 
-public class ChatMessage
+public partial class SourceItem : ObservableObject
 {
-    public string Role { get; set; } = string.Empty;
-    public string Text { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string _documentName = string.Empty;
+
+    [ObservableProperty]
+    private string _text = string.Empty;
+
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    [RelayCommand]
+    private void ToggleExpanded()
+    {
+        IsExpanded = !IsExpanded;
+    }
+}
+
+public partial class ChatMessage : ObservableObject
+{
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsUser))]
+    [NotifyPropertyChangedFor(nameof(IsAi))]
+    private string _role = string.Empty;
+
+    [ObservableProperty]
+    private string _text = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSources))]
+    private ObservableCollection<SourceItem> _sources = new();
+
+    public bool IsUser => Role == "User";
+    public bool IsAi => Role != "User";
+
+    public bool HasSources => Sources.Any();
+
+    public void UpdateHasSources()
+    {
+        OnPropertyChanged(nameof(HasSources));
+    }
 }
 
 public partial class ChatViewModel : ViewModelBase
@@ -37,10 +76,6 @@ public partial class ChatViewModel : ViewModelBase
                 Text = "⚠️ Внимание: Модели не найдены! Пожалуйста, скачайте необходимые GGUF файлы в папку models. Без них приложение не сможет генерировать ответы." 
             });
         }
-        else
-        {
-            Messages.Add(new ChatMessage { Role = "AI", Text = "Привет! Я Local AI Searcher. Задайте мне вопрос по вашим документам." });
-        }
     }
 
     [RelayCommand]
@@ -56,10 +91,45 @@ public partial class ChatViewModel : ViewModelBase
         
         IsThinking = true;
 
-        var response = await _ragService.AskAsync(question);
+        var aiMessage = new ChatMessage { Role = "AI", Text = string.Empty };
+        Messages.Add(aiMessage);
 
-        Messages.Add(new ChatMessage { Role = "AI", Text = response.Answer });
+        try
+        {
+            await foreach (var chunk in _ragService.AskStreamAsync(question))
+            {
+                if (!string.IsNullOrEmpty(chunk.Text))
+                {
+                    aiMessage.Text += chunk.Text;
+                }
 
-        IsThinking = false;
+                if (chunk.Sources != null && chunk.Sources.Count > 0)
+                {
+                    foreach (var source in chunk.Sources)
+                    {
+                        aiMessage.Sources.Add(new SourceItem
+                        {
+                            DocumentName = source.DocumentName,
+                            Text = source.Text,
+                            IsExpanded = false
+                        });
+                    }
+                    aiMessage.UpdateHasSources();
+                }
+            }
+            
+            if (string.IsNullOrWhiteSpace(aiMessage.Text) && !aiMessage.HasSources)
+            {
+                aiMessage.Text = "Пустой ответ модели.";
+            }
+        }
+        catch (Exception ex)
+        {
+            aiMessage.Text = $"Произошла ошибка: {ex.Message}";
+        }
+        finally
+        {
+            IsThinking = false;
+        }
     }
 }

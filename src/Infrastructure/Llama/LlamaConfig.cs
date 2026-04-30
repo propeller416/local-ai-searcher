@@ -1,14 +1,21 @@
 namespace Infrastructure.Llama;
 
-/// <summary>Пути к GGUF и параметры контекста. В рантайме: <c>{BaseDirectory}/models/*.gguf</c> (в дистрибутив копируются из <c>models/</c> в корне репозитория).</summary>
 public sealed record LlamaConfig(
     string ChatModelPath,
     string EmbedModelPath,
     uint ChatContextSize,
     uint EmbedContextSize,
-    int GpuLayerCount)
+    int GpuLayerCount,
+    float Temperature = 0.1f,
+    int MaxTokens = 1024)
 {
-    public const string DefaultChatFileName = "llama3.2-3b-q4_k_m.gguf";
+    //llama3.2-3b-q4_k_m.gguf
+    //gemma-4-E4B-it-UD-Q4_K_XL.gguf
+    //gemma-4-E4B-it-Q4_K_M.gguf
+    //Qwen3.5-4B-Q4_K_M.gguf
+    //T-lite-it-2.1-Q8_0.gguf
+
+    public const string DefaultChatFileName = "T-lite-it-2.1-Q8_0.gguf";
     public const string DefaultEmbedFileName = "nomic-embed-text.gguf";
 
     public static LlamaConfig FromBaseDirectory(string? baseDirectory = null, int gpuLayerCount = 0)
@@ -20,6 +27,8 @@ public sealed record LlamaConfig(
             Path.Combine(modelsDir, DefaultEmbedFileName),
             ChatContextSize: 4096,
             EmbedContextSize: 2048,
-            GpuLayerCount: gpuLayerCount);
+            GpuLayerCount: gpuLayerCount,
+            Temperature: 0.1f,
+            MaxTokens: 1024);
     }
 }

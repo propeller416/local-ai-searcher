@@ -10,4 +10,5 @@ public interface IDocumentRepository
     Task AddAsync(Document doc);
     Task UpdateAsync(Document doc);
     Task SaveChunksAsync(Guid documentId, List<DocumentChunk> chunks, List<float[]> embeddings);
+    Task<List<string>> SearchSimilarChunksAsync(float[] queryEmbedding, int limit = 5);
 }
