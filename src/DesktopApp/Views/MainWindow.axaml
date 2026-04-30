@@ -11,24 +11,24 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="Local AI Searcher"
         WindowStartupLocation="CenterScreen"
-        Background="#E3EBD3">
+        Background="#F2F6F8">
 
     <Window.Styles>
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="12, 10"/>
-            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Margin" Value="12, 4"/>
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-            <Setter Property="Background" Value="#B8D3B7"/>
-            <Setter Property="TextBlock.Foreground" Value="#000000"/>
+            <Setter Property="Background" Value="#C1D7D3"/>
+            <Setter Property="TextBlock.Foreground" Value="#1A1C19"/>
         </Style>
         <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#AEC5BA"/>
         </Style>
         <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="#D6E5CB"/>
+            <Setter Property="Background" Value="#E0EBE8"/>
         </Style>
     </Window.Styles>
 
@@ -44,9 +44,9 @@
                 <Button Grid.Row="0" Margin="16, 0, 16, 16"
                         Width="40" Height="40"
                         CornerRadius="20"
-                        Background="Transparent"
+                        Background="#FFFFFF"
                         Command="{Binding TogglePaneCommand}">
-                    <materialIcons:MaterialIcon Kind="Menu" Width="24" Height="24" Foreground="#444740"/>
+                    <materialIcons:MaterialIcon Kind="Menu" Width="20" Height="20" Foreground="#444740"/>
                 </Button>
 
                 <!-- Navigation List -->
@@ -57,7 +57,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Spacing="16" Background="Transparent">
-                                <materialIcons:MaterialIcon Kind="{Binding Icon}" Width="24" Height="24" Foreground="#444740"/>
+                                <materialIcons:MaterialIcon Kind="{Binding Icon}" Width="20" Height="20" Foreground="#444740"/>
                                 <TextBlock Text="{Binding Title}" VerticalAlignment="Center" Foreground="#1A1C19" FontWeight="Medium" FontSize="14" IsVisible="{Binding $parent[SplitView].IsPaneOpen}"/>
                             </StackPanel>
                         </DataTemplate>
@@ -69,10 +69,12 @@
         <SplitView.Content>
             <!-- Content Area (Right Sidebar) -->
             <Border Background="#FFFFFF" 
-                    CornerRadius="24"
+                    CornerRadius="16"
                     Margin="0, 16, 16, 16"
-                    BoxShadow="0 2 10 0 #1A000000">
-                <TransitioningContentControl Content="{Binding SelectedItem.ViewModel}" Padding="24" />
+                    BoxShadow="0 2 10 0 #0A000000"
+                    BorderBrush="#E0EBE8"
+                    BorderThickness="1">
+                <TransitioningContentControl Content="{Binding SelectedItem.ViewModel}" />
             </Border>
         </SplitView.Content>
     </SplitView>

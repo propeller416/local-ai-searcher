@@ -3,5 +3,5 @@
              xmlns:vm="using:DesktopApp.ViewModels"
              x:Class="DesktopApp.Views.HistoryView"
              x:DataType="vm:HistoryViewModel">
-    <TextBlock Text="История (В разработке)" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="Bold" Foreground="#89A595"/>
+    <TextBlock Text="История (В разработке)" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="Bold" Foreground="#1A1C19"/>
 </UserControl>

@@ -4,21 +4,34 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:DesktopApp.ViewModels"
              xmlns:md="https://github.com/whistyun/Markdown.Avalonia"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:DataType="vm:ChatViewModel"
              x:Class="DesktopApp.Views.ChatView">
 
   <UserControl.Styles>
     <Style Selector="Border.userMessage">
-      <Setter Property="Background" Value="{DynamicResource MaterialPrimaryMidBrush}" />
+      <Setter Property="Background" Value="#AEC5BA" />
       <Setter Property="HorizontalAlignment" Value="Left" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="16, 12" />
+      <Setter Property="Margin" Value="0, 8" />
     </Style>
     <Style Selector="Border.userMessage TextBlock">
-      <Setter Property="Foreground" Value="#FFFFFF" />
+      <Setter Property="Foreground" Value="#1A1C19" />
     </Style>
     <Style Selector="Border.aiMessage">
-      <Setter Property="Background" Value="{DynamicResource MaterialCardBackgroundBrush}" />
+      <Setter Property="Background" Value="#FFFFFF" />
       <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="16, 12" />
+      <Setter Property="Margin" Value="0, 8" />
+      <Setter Property="BorderBrush" Value="#E0EBE8" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BoxShadow" Value="0 2 10 0 #05000000" />
+    </Style>
+    <Style Selector="Border.aiMessage TextBlock">
+      <Setter Property="Foreground" Value="#1A1C19" />
     </Style>
   </UserControl.Styles>
 
@@ -27,9 +40,7 @@
     <ListBox Grid.Row="0" ItemsSource="{Binding Messages}" Background="Transparent" Margin="16" BorderThickness="0">
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <Border CornerRadius="12" 
-                  Padding="16" Margin="0,8"
-                  Classes.userMessage="{Binding IsUser}"
+          <Border Classes.userMessage="{Binding IsUser}"
                   Classes.aiMessage="{Binding IsAi}">
             <StackPanel>
               <md:MarkdownScrollViewer Markdown="{Binding Text}">
@@ -40,31 +51,39 @@
                   </md:MarkdownScrollViewer.Styles>
               </md:MarkdownScrollViewer>
                          
-              <StackPanel IsVisible="{Binding HasSources}" Margin="0,16,0,0" HorizontalAlignment="Left">
-                  <TextBlock Text="Источники:" FontWeight="Bold" Margin="0,0,0,8" />
+              <StackPanel IsVisible="{Binding HasSources}" Margin="0,16,0,0" HorizontalAlignment="Stretch">
+                  <TextBlock Text="Источники:" FontWeight="Bold" Margin="0,0,0,8" Foreground="#1A1C19"/>
+                  
                   <ItemsControl ItemsSource="{Binding Sources}">
                       <ItemsControl.ItemTemplate>
                           <DataTemplate>
-                              <StackPanel Margin="0,4" HorizontalAlignment="Left">
+                              <StackPanel Margin="0,2" HorizontalAlignment="Stretch">
+                                  
+                                  <Border IsVisible="{Binding IsExpanded}" 
+                                          Background="#F2F6F8" 
+                                          CornerRadius="8" 
+                                          Padding="12" 
+                                          Margin="0,0,0,8"
+                                          BorderBrush="#E0EBE8"
+                                          BorderThickness="1">
+                                      <StackPanel>
+                                          <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                                              <materialIcons:MaterialIcon Kind="InformationOutline" Width="16" Height="16" Foreground="#444740"/>
+                                          </StackPanel>
+                                          <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontSize="12" Foreground="#444740" />
+                                      </StackPanel>
+                                  </Border>
+
                                   <Button Background="Transparent" 
                                           Padding="0" Margin="0" BorderThickness="0"
                                           Command="{Binding ToggleExpandedCommand}"
                                           HorizontalAlignment="Left">
                                       <StackPanel Orientation="Horizontal" Spacing="8">
-                                          <TextBlock Text="-" VerticalAlignment="Center" />
-                                          <TextBlock Text="{Binding DocumentName}" VerticalAlignment="Center" />
-                                          <TextBlock Text="↑" IsVisible="{Binding IsExpanded}" VerticalAlignment="Center" FontSize="14" Margin="4,0,0,0"/>
-                                          <TextBlock Text="↓" IsVisible="{Binding !IsExpanded}" VerticalAlignment="Center" FontSize="14" Margin="4,0,0,0"/>
+                                          <TextBlock Text="-" VerticalAlignment="Center" Foreground="#444740"/>
+                                          <TextBlock Text="{Binding DocumentName}" VerticalAlignment="Center" Foreground="#444740"/>
+                                          <materialIcons:MaterialIcon Kind="Information" Width="16" Height="16" Foreground="#1A567B"/>
                                       </StackPanel>
                                   </Button>
-                                  
-                                  <Border IsVisible="{Binding IsExpanded}" 
-                                          Background="#0A000000" 
-                                          CornerRadius="8" 
-                                          Padding="12" 
-                                          Margin="16,8,0,0">
-                                      <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Classes="Body2" />
-                                  </Border>
                               </StackPanel>
                           </DataTemplate>
                       </ItemsControl.ItemTemplate>
@@ -76,32 +95,39 @@
       </ListBox.ItemTemplate>
     </ListBox>
     
-    <Border Grid.Row="1" 
-            Background="{DynamicResource MaterialCardBackgroundBrush}" 
-            Padding="16" 
-            CornerRadius="16,16,0,0"
-            BoxShadow="0 -2 10 0 #20000000">
-        <Grid ColumnDefinitions="*, Auto">
-        <TextBox Grid.Column="0" 
+    <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto" Margin="16" >
+        <Button Grid.Column="0" Width="40" Height="40" CornerRadius="8" Background="#E0EBE8" Margin="0,0,12,0" VerticalAlignment="Center" Padding="0">
+            <TextBlock Text="+" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" Foreground="#444740"/>
+        </Button>
+        
+        <TextBox Grid.Column="1" 
                  Text="{Binding UserInput}" 
-                 Theme="{StaticResource OutlineTextBox}"
+                 CornerRadius="8"
+                 Background="#FFFFFF"
+                 BorderBrush="#E0EBE8"
+                 BorderThickness="1"
                  PlaceholderText="Задайте вопрос по документам..." 
                  AcceptsReturn="True" 
                  MaxHeight="120"
-                 VerticalAlignment="Center"/>
+                 MinHeight="40"
+                 VerticalAlignment="Center"
+                 VerticalContentAlignment="Center"
+                 Padding="12, 8"
+                 KeyDown="OnTextBoxKeyDown"/>
         
-        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" Margin="16,0,0,0" VerticalAlignment="Center">
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" Margin="12,0,0,0" VerticalAlignment="Center">
             <ProgressBar IsIndeterminate="True" 
                          IsVisible="{Binding IsThinking}" 
                          Width="30" Height="30"
                          Classes="Circular"/>
             <Button Content="ОТПРАВИТЬ" 
-                    Background="#89A595"
+                    Background="#3B8A7E"
                     Foreground="#FFFFFF"
                     CornerRadius="8"
+                    Padding="16, 10"
+                    FontWeight="Bold"
                     Command="{Binding SendMessageCommand}"/>
         </StackPanel>
-        </Grid>
-    </Border>
+    </Grid>
   </Grid>
 </UserControl>

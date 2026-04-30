@@ -3,70 +3,77 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:DesktopApp.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:DataType="vm:DocumentsViewModel"
              x:Class="DesktopApp.Views.DocumentsView">
 
-  <DockPanel Margin="16">
+  <DockPanel Margin="24">
     <TextBlock DockPanel.Dock="Top" 
-               Classes="Headline6" 
+               FontSize="24" 
                Text="База знаний" 
                FontWeight="Bold"
-               Foreground="#89A595"
-               Margin="0,0,0,16"/>
+               Foreground="#1A1C19"
+               Margin="0,0,0,24"/>
 
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,16">
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="16" Margin="0,0,0,24">
       <Button Content="Загрузить документ" 
-              Classes="Outline"
+              Background="#3B8A7E"
+              Foreground="#FFFFFF"
+              CornerRadius="8"
+              Padding="16, 10"
+              FontWeight="Bold"
               Command="{Binding UploadDocumentCommand}" />
       <ProgressBar IsIndeterminate="True" 
                    IsVisible="{Binding IsUploading}" 
                    Width="100" 
                    VerticalAlignment="Center"/>
       <TextBlock Text="{Binding ErrorMessage}" 
-                 Classes="Body2" 
-                 Foreground="{DynamicResource MaterialValidationErrorBrush}"
+                 Foreground="#D32F2F"
                  VerticalAlignment="Center"
                  IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
     </StackPanel>
     
-    <ListBox ItemsSource="{Binding Documents}" Background="Transparent">
+    <ListBox ItemsSource="{Binding Documents}" Background="Transparent" BorderThickness="0">
       <ListBox.ItemTemplate>
         <DataTemplate>
-          <Border CornerRadius="8" 
-                  Background="{DynamicResource MaterialCardBackgroundBrush}" 
-                  Padding="12" Margin="0,4">
+          <Border CornerRadius="12" 
+                  Background="#FFFFFF" 
+                  BorderBrush="#E0EBE8"
+                  BorderThickness="1"
+                  Padding="16" Margin="0,4"
+                  BoxShadow="0 2 10 0 #05000000">
             <Grid ColumnDefinitions="*, Auto, Auto">
               <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <TextBlock Text="{Binding Filename}" 
-                           Classes="Subtitle1" 
+                           FontSize="16" FontWeight="Medium" Foreground="#1A1C19"
                            TextTrimming="CharacterEllipsis"/>
                 <TextBlock Text="{Binding FilePath}" 
-                           Classes="Caption" 
-                           Foreground="{DynamicResource MaterialBodyLightBrush}"
+                           FontSize="12" 
+                           Foreground="#707371"
                            TextTrimming="CharacterEllipsis"
-                           Margin="0,2,0,0"/>
+                           Margin="0,4,0,0"/>
                 <TextBlock Text="{Binding UploadedAt, StringFormat='{}dd.MM.yyyy HH:mm'}" 
-                           Classes="Caption" 
-                           Foreground="{DynamicResource MaterialBodyLightBrush}"
+                           FontSize="12" 
+                           Foreground="#707371"
                            Margin="0,4,0,0"/>
               </StackPanel>
               
               <Border Grid.Column="1" 
                       CornerRadius="16" 
-                      Background="{DynamicResource MaterialPrimaryMidBrush}"
-                      Padding="8,4" 
+                      Background="#E0EBE8"
+                      Padding="12,4" 
                       Margin="16,0" 
                       VerticalAlignment="Center">
                 <TextBlock Text="{Binding Status}" 
-                           Classes="Caption" 
-                           Foreground="{DynamicResource MaterialPrimaryMidForegroundBrush}"/>
+                           FontSize="12" FontWeight="Medium"
+                           Foreground="#444740"/>
               </Border>
               
               <Button Grid.Column="2" 
                       Content="Удалить" 
-                      Classes="Flat"
-                      Foreground="{DynamicResource MaterialValidationErrorBrush}"
+                      Background="Transparent"
+                      Foreground="#D32F2F"
+                      CornerRadius="8"
                       Command="{Binding $parent[UserControl].((vm:DocumentsViewModel)DataContext).DeleteDocumentCommand}" 
                       CommandParameter="{Binding}"
                       VerticalAlignment="Center"/>
