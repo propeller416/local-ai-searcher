@@ -8,7 +8,9 @@ namespace Infrastructure.Services;
 /// <summary>RAG сервис: векторный поиск и генерация ответа через Semantic Kernel.</summary>
 public sealed class KernelChatRagService(
     Lazy<IChatCompletionService> chatCompletion,
+#pragma warning disable CS0618
     Lazy<ITextEmbeddingGenerationService> textEmbedding,
+#pragma warning restore CS0618
     IDocumentRepository documentRepository,
     Infrastructure.Llama.LlamaConfig config) : IRagService
 {
