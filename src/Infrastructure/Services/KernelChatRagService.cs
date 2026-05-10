@@ -12,10 +12,12 @@ public sealed class KernelChatRagService(
     Lazy<ITextEmbeddingGenerationService> textEmbedding,
 #pragma warning restore CS0618
     IDocumentRepository documentRepository,
-    Infrastructure.Llama.LlamaConfig config) : IRagService
+    ISettingsService settingsService) : IRagService
 {
     public async IAsyncEnumerable<RagResponseChunk> AskStreamAsync(string question)
     {
+        var settings = settingsService.LoadSettings();
+        
         ReadOnlyMemory<float> queryEmbedding = default;
         string? errorMessage = null;
         try
@@ -53,44 +55,52 @@ public sealed class KernelChatRagService(
         }
 
         var contextText = string.Join("\n\n", similarChunks);
-        var systemPrompt = $@"Ты — ассистент для поиска по документации. Отвечай на вопросы пользователя на русском языке, используя только предоставленный контекст. Если в контексте нет ответа, скажи об этом.
+        var systemPrompt = $@"{settings.SystemPrompt}
 
 Контекст:
 {contextText}";
 
-        var history = new ChatHistory(systemPrompt);
-        history.AddUserMessage(question);
-
-        var settings = new PromptExecutionSettings
+        if (!settings.EnableLlm)
         {
-            ExtensionData = new Dictionary<string, object>
+            // Если LLM отключена, просто возвращаем источники без текстового сообщения
+        }
+        else
+        {
+            var history = new ChatHistory(systemPrompt);
+            history.AddUserMessage(question);
+
+            var executionSettings = new PromptExecutionSettings
             {
-                { "temperature", config.Temperature },
-                { "max_tokens", config.MaxTokens }
+                ExtensionData = new Dictionary<string, object>
+                {
+                    { "temperature", settings.Temperature },
+                    { "max_tokens", settings.MaxTokens }
+                }
+            };
+
+            IAsyncEnumerable<StreamingChatMessageContent>? streamingResult = null;
+            try
+            {
+                streamingResult = chatCompletion.Value.GetStreamingChatMessageContentsAsync(history, executionSettings);
             }
-        };
-
-        IAsyncEnumerable<StreamingChatMessageContent>? streamingResult = null;
-        try
-        {
-            streamingResult = chatCompletion.Value.GetStreamingChatMessageContentsAsync(history, settings);
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Не удалось запустить генерацию ответа. Подробности: {ex.Message}";
-        }
-
-        if (errorMessage != null || streamingResult == null)
-        {
-            yield return new RagResponseChunk { Text = errorMessage ?? "Неизвестная ошибка при запуске генерации." };
-            yield break;
-        }
-
-        await foreach (var chunk in streamingResult.ConfigureAwait(false))
-        {
-            if (!string.IsNullOrEmpty(chunk.Content))
+            catch (Exception ex)
             {
-                yield return new RagResponseChunk { Text = chunk.Content };
+                errorMessage = $"Не удалось запустить генерацию ответа. Подробности: {ex.Message}";
+            }
+
+            if (errorMessage != null || streamingResult == null)
+            {
+                yield return new RagResponseChunk { Text = errorMessage ?? "Неизвестная ошибка при запуске генерации." };
+            }
+            else
+            {
+                await foreach (var chunk in streamingResult.ConfigureAwait(false))
+                {
+                    if (!string.IsNullOrEmpty(chunk.Content))
+                    {
+                        yield return new RagResponseChunk { Text = chunk.Content };
+                    }
+                }
             }
         }
 

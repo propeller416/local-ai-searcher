@@ -3,5 +3,54 @@
              xmlns:vm="using:DesktopApp.ViewModels"
              x:Class="DesktopApp.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
-    <TextBlock Text="Настройки (В разработке)" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="Bold" Foreground="#1A1C19"/>
+    <Grid RowDefinitions="*,Auto" Margin="20">
+        <TabControl Grid.Row="0">
+            <!-- Вкладка Модели -->
+            <TabItem Header="Модели">
+                <StackPanel Spacing="15" Margin="0,15,0,0">
+                    <TextBlock Text="Модель для чата:" FontWeight="SemiBold"/>
+                    <ComboBox ItemsSource="{Binding AvailableModels}" 
+                              SelectedItem="{Binding ChatModelFileName}" 
+                              HorizontalAlignment="Stretch"/>
+
+                    <TextBlock Text="Модель для эмбеддингов (векторизации):" FontWeight="SemiBold"/>
+                    <ComboBox ItemsSource="{Binding AvailableModels}" 
+                              SelectedItem="{Binding EmbedModelFileName}" 
+                              HorizontalAlignment="Stretch"/>
+
+                    <TextBlock Text="Температура генерации:" FontWeight="SemiBold"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Slider Minimum="0" Maximum="2" Value="{Binding Temperature}" Width="200" TickFrequency="0.1" IsSnapToTickEnabled="True"/>
+                        <TextBlock Text="{Binding Temperature, StringFormat={}{0:F1}}" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Лимит токенов (Max Tokens):" FontWeight="SemiBold"/>
+                    <NumericUpDown Minimum="128" Maximum="8192" Value="{Binding MaxTokens}" Increment="128" Width="200" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Вкладка Чат -->
+            <TabItem Header="Чат">
+                <StackPanel Spacing="15" Margin="0,15,0,0">
+                    <CheckBox IsChecked="{Binding EnableLlm}" Content="Генерировать текстовый ответ (LLM)"/>
+                    <CheckBox IsChecked="{Binding ShowSources}" Content="Показывать источники"/>
+
+                    <TextBlock Text="Системный промпт:" FontWeight="SemiBold"/>
+                    <TextBox Text="{Binding SystemPrompt}" 
+                             AcceptsReturn="True" 
+                             TextWrapping="Wrap" 
+                             Height="150" 
+                             HorizontalAlignment="Stretch"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="15" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <TextBlock Text="Для применения новых моделей требуется перезапуск приложения" 
+                       Foreground="Red" 
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding IsRestartRequired}"/>
+            <Button Content="Сохранить" Command="{Binding SaveSettingsCommand}" Classes="accent"/>
+        </StackPanel>
+    </Grid>
 </UserControl>

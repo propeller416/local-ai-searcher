@@ -54,6 +54,7 @@ public partial class ChatMessage : ObservableObject
 public partial class ChatViewModel : ViewModelBase
 {
     private readonly IRagService _ragService;
+    private readonly ISettingsService _settingsService;
 
     [ObservableProperty]
     private ObservableCollection<ChatMessage> _messages = new();
@@ -64,17 +65,22 @@ public partial class ChatViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isThinking;
 
-    public ChatViewModel(IRagService ragService, Infrastructure.Llama.LlamaConfig config)
+    public ChatViewModel(IRagService ragService, ISettingsService settingsService, Infrastructure.Llama.LlamaConfig config)
     {
         _ragService = ragService;
+        _settingsService = settingsService;
         
-        if (!System.IO.File.Exists(config.ChatModelPath) || !System.IO.File.Exists(config.EmbedModelPath))
+        var settings = _settingsService.LoadSettings();
+        if (settings.EnableLlm)
         {
-            Messages.Add(new ChatMessage 
-            { 
-                Role = "AI", 
-                Text = "⚠️ Внимание: Модели не найдены! Пожалуйста, скачайте необходимые GGUF файлы в папку models. Без них приложение не сможет генерировать ответы." 
-            });
+            if (!System.IO.File.Exists(config.ChatModelPath) || !System.IO.File.Exists(config.EmbedModelPath))
+            {
+                Messages.Add(new ChatMessage 
+                { 
+                    Role = "AI", 
+                    Text = "⚠️ Внимание: Модели не найдены! Пожалуйста, скачайте необходимые GGUF файлы в папку models. Без них приложение не сможет генерировать ответы." 
+                });
+            }
         }
     }
 
@@ -96,6 +102,7 @@ public partial class ChatViewModel : ViewModelBase
 
         try
         {
+            var settings = _settingsService.LoadSettings();
             await foreach (var chunk in _ragService.AskStreamAsync(question))
             {
                 if (!string.IsNullOrEmpty(chunk.Text))
@@ -103,7 +110,7 @@ public partial class ChatViewModel : ViewModelBase
                     aiMessage.Text += chunk.Text;
                 }
 
-                if (chunk.Sources != null && chunk.Sources.Count > 0)
+                if (settings.ShowSources && chunk.Sources != null && chunk.Sources.Count > 0)
                 {
                     foreach (var source in chunk.Sources)
                     {
@@ -118,9 +125,13 @@ public partial class ChatViewModel : ViewModelBase
                 }
             }
             
-            if (string.IsNullOrWhiteSpace(aiMessage.Text) && !aiMessage.HasSources)
+            if (string.IsNullOrWhiteSpace(aiMessage.Text) && !aiMessage.HasSources && settings.EnableLlm)
             {
                 aiMessage.Text = "Пустой ответ модели.";
+            }
+            else if (string.IsNullOrWhiteSpace(aiMessage.Text) && !aiMessage.HasSources && !settings.EnableLlm)
+            {
+                aiMessage.Text = "Совпадений в базе не найдено.";
             }
         }
         catch (Exception ex)
