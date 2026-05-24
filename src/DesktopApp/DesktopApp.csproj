@@ -7,6 +7,8 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AssemblyName>LocalAiSearcher</AssemblyName>
     <AssemblyTitle>Local AI Searcher</AssemblyTitle>
+    <!-- Исправляем конфликт нативных библиотек LLamaSharp при публикации -->
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,9 +17,14 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
-    <!-- Корень репозитория: models/*.gguf → в выходе приложения: models/*.gguf (рядом с exe) -->
-    <None Include="..\..\models\**\*">
-      <Link>models\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    <!-- Копируем только те модели, которые нужны по умолчанию -->
+    <None Include="..\..\models\llama-3.2-3b-instruct-uncensored-q3_k_m.gguf">
+      <Link>models\llama-3.2-3b-instruct-uncensored-q3_k_m.gguf</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+    <None Include="..\..\models\nomic-embed-text.gguf">
+      <Link>models\nomic-embed-text.gguf</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>

@@ -11,19 +11,19 @@ build-win:
 	@echo "Publishing the application for win-x64..."
 	dotnet publish src/DesktopApp/DesktopApp.csproj -c Release -r win-x64 --self-contained true -o $(PUBLISH_DIR)
 	@echo "Packing the application with Velopack for Windows..."
-	$(VPK) pack --packId $(PACK_ID) --packVersion $(PACK_VERSION) --packDir $(PUBLISH_DIR) --mainExe $(PACK_ID).exe
+	$(VPK) "[win]" pack -c win -r win-x64 --packId $(PACK_ID) --packVersion $(PACK_VERSION) --packDir $(PUBLISH_DIR) --mainExe $(PACK_ID).exe
 
 build-mac:
 	@echo "Publishing the application for osx-arm64..."
 	dotnet publish src/DesktopApp/DesktopApp.csproj -c Release -r osx-arm64 --self-contained true -o $(PUBLISH_DIR)
 	@echo "Packing the application with Velopack for macOS..."
-	$(VPK) pack --packId $(PACK_ID) --packVersion $(PACK_VERSION) --packDir $(PUBLISH_DIR) --mainExe $(PACK_ID)
+	$(VPK) "[osx]" pack -c osx -r osx-arm64 --packId $(PACK_ID) --packVersion $(PACK_VERSION) --packDir $(PUBLISH_DIR) --mainExe $(PACK_ID)
 
 build-linux:
 	@echo "Publishing the application for linux-x64..."
 	dotnet publish src/DesktopApp/DesktopApp.csproj -c Release -r linux-x64 --self-contained true -o $(PUBLISH_DIR)
 	@echo "Packing the application with Velopack for Linux..."
-	$(VPK) pack --packId $(PACK_ID) --packVersion $(PACK_VERSION) --packDir $(PUBLISH_DIR) --mainExe $(PACK_ID)
+	$(VPK) "[linux]" pack -c linux -r linux-x64 --packId $(PACK_ID) --packVersion $(PACK_VERSION) --packDir $(PUBLISH_DIR) --mainExe $(PACK_ID)
 
 clean:
 	@echo "Cleaning output directories..."
