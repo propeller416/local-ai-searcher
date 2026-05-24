@@ -1,5 +1,5 @@
 {
-  "ChatModelFileName": "llama3.2-3b-q4_k_m.gguf",
+  "ChatModelFileName": "llama-3.2-3b-instruct-uncensored-q3_k_m.gguf",
   "EmbedModelFileName": "nomic-embed-text.gguf",
   "Temperature": 0.1,
   "MaxTokens": 1024,
