@@ -13,11 +13,13 @@
     <AvaloniaResource Include="Assets\**" />
     <None Include="..\..\settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
     <!-- Корень репозитория: models/*.gguf → в выходе приложения: models/*.gguf (рядом с exe) -->
     <None Include="..\..\models\**\*">
       <Link>models\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </None>
   </ItemGroup>
 
@@ -36,6 +38,7 @@
     <PackageReference Include="Material.Icons.Avalonia" Version="3.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.6" />
+    <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 
   <ItemGroup>

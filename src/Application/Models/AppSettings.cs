@@ -2,7 +2,7 @@ namespace Application.Models;
 
 public class AppSettings
 {
-    public string ChatModelFileName { get; set; } = "llama3.2-3b-q4_k_m.gguf";
+    public string ChatModelFileName { get; set; } = "llama-3.2-3b-instruct-uncensored-q3_k_m.gguf";
     public string EmbedModelFileName { get; set; } = "nomic-embed-text.gguf";
     public float Temperature { get; set; } = 0.1f;
     public int MaxTokens { get; set; } = 1024;

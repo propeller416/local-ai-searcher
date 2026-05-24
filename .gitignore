@@ -31,3 +31,7 @@ appsettings.*.json
 ## OS
 .DS_Store
 Thumbs.db
+
+## Build and Release outputs
+publish_output/
+Releases/
