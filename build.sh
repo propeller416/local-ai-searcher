@@ -12,11 +12,11 @@ echo "Packing the application with Velopack..."
 VPK="DOTNET_ROLL_FORWARD=Major $HOME/.dotnet/tools/vpk"
 
 if [ "$RID" == "win-x64" ]; then
-    eval "$VPK pack --packId LocalAiSearcher --packVersion 1.0.0 --packDir ./publish_output --mainExe LocalAiSearcher.exe"
+    eval "$VPK \"[win]\" pack -c win -r win-x64 --packId LocalAiSearcher --packVersion 1.0.0 --packDir ./publish_output --mainExe LocalAiSearcher.exe"
 elif [[ "$RID" == osx* ]]; then
-    eval "$VPK pack --packId LocalAiSearcher --packVersion 1.0.0 --packDir ./publish_output --mainExe LocalAiSearcher"
+    eval "$VPK \"[osx]\" pack -c osx -r osx-arm64 --packId LocalAiSearcher --packVersion 1.0.0 --packDir ./publish_output --mainExe LocalAiSearcher"
 elif [[ "$RID" == linux* ]]; then
-    eval "$VPK pack --packId LocalAiSearcher --packVersion 1.0.0 --packDir ./publish_output --mainExe LocalAiSearcher"
+    eval "$VPK \"[linux]\" pack -c linux -r linux-x64 --packId LocalAiSearcher --packVersion 1.0.0 --packDir ./publish_output --mainExe LocalAiSearcher"
 else
     eval "$VPK pack --packId LocalAiSearcher --packVersion 1.0.0 --packDir ./publish_output --mainExe LocalAiSearcher"
 fi
