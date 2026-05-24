@@ -11,6 +11,9 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <None Include="..\..\settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <!-- Корень репозитория: models/*.gguf → в выходе приложения: models/*.gguf (рядом с exe) -->
     <None Include="..\..\models\**\*">
       <Link>models\%(RecursiveDir)%(Filename)%(Extension)</Link>

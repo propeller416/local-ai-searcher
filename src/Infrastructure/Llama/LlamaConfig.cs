@@ -18,17 +18,17 @@ public sealed record LlamaConfig(
     public const string DefaultChatFileName = "llama3.2-3b-q4_k_m.gguf";
     public const string DefaultEmbedFileName = "nomic-embed-text.gguf";
 
-    public static LlamaConfig FromBaseDirectory(string? baseDirectory = null, int gpuLayerCount = 0)
+    public static LlamaConfig FromSettings(Application.Models.AppSettings settings, string? baseDirectory = null, int gpuLayerCount = 0)
     {
         var root = baseDirectory ?? AppContext.BaseDirectory;
         var modelsDir = Path.Combine(root, "models");
         return new LlamaConfig(
-            Path.Combine(modelsDir, DefaultChatFileName),
-            Path.Combine(modelsDir, DefaultEmbedFileName),
+            Path.Combine(modelsDir, settings.ChatModelFileName),
+            Path.Combine(modelsDir, settings.EmbedModelFileName),
             ChatContextSize: 4096,
             EmbedContextSize: 2048,
             GpuLayerCount: gpuLayerCount,
-            Temperature: 0.1f,
-            MaxTokens: 1024);
+            Temperature: settings.Temperature,
+            MaxTokens: settings.MaxTokens);
     }
 }

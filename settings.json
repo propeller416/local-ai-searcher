@@ -1,0 +1,9 @@
+{
+  "ChatModelFileName": "llama3.2-3b-q4_k_m.gguf",
+  "EmbedModelFileName": "nomic-embed-text.gguf",
+  "Temperature": 0.1,
+  "MaxTokens": 1024,
+  "SystemPrompt": "Ты — ассистент для поиска по документации. Отвечай на вопросы пользователя на русском языке, используя только предоставленный контекст. Если в контексте нет ответа, скажи об этом.",
+  "EnableLlm": true,
+  "ShowSources": true
+}
