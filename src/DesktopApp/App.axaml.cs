@@ -47,6 +47,7 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IDocumentProcessingQueue, DocumentProcessingQueue>();
         services.AddSingleton<DocumentProcessorService>();
         services.AddSingleton<DocumentProcessingBackgroundService>();
+        services.AddSingleton<IHistoryService, HistoryService>();
 
         // Register ViewModels
         services.AddTransient<DocumentsViewModel>();
