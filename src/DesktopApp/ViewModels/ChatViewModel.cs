@@ -55,6 +55,9 @@ public partial class ChatViewModel : ViewModelBase
 {
     private readonly IRagService _ragService;
     private readonly ISettingsService _settingsService;
+    private readonly IHistoryService _historyService;
+    private string _currentSessionId = Guid.NewGuid().ToString("N");
+    private string _currentSessionTitle = string.Empty;
 
     [ObservableProperty]
     private ObservableCollection<ChatMessage> _messages = new();
@@ -65,10 +68,11 @@ public partial class ChatViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isThinking;
 
-    public ChatViewModel(IRagService ragService, ISettingsService settingsService, Infrastructure.Llama.LlamaConfig config)
+    public ChatViewModel(IRagService ragService, ISettingsService settingsService, IHistoryService historyService, Infrastructure.Llama.LlamaConfig config)
     {
         _ragService = ragService;
         _settingsService = settingsService;
+        _historyService = historyService;
         
         var settings = _settingsService.LoadSettings();
         if (settings.EnableLlm)
@@ -141,6 +145,53 @@ public partial class ChatViewModel : ViewModelBase
         finally
         {
             IsThinking = false;
+            await SaveHistoryAsync();
         }
+    }
+
+    private async Task SaveHistoryAsync()
+    {
+        if (Messages.Count == 0) return;
+
+        if (string.IsNullOrEmpty(_currentSessionTitle))
+        {
+            var firstMessage = Messages.FirstOrDefault(m => m.IsUser)?.Text ?? "Новый чат";
+            var words = firstMessage.Split(new[] { ' ', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            var titleText = string.Join(" ", words.Take(5));
+            _currentSessionTitle = $"{DateTime.Now:yyyy-MM-dd HH-mm} {titleText}";
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"# {_currentSessionTitle}");
+        sb.AppendLine();
+
+        foreach (var msg in Messages)
+        {
+            if (msg.IsUser)
+            {
+                sb.AppendLine("## Вы");
+                sb.AppendLine(msg.Text);
+            }
+            else
+            {
+                sb.AppendLine("## AI");
+                sb.AppendLine(msg.Text);
+                
+                if (msg.HasSources)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine("**Источники:**");
+                    foreach (var source in msg.Sources)
+                    {
+                        sb.AppendLine($"- {source.DocumentName}");
+                    }
+                }
+            }
+            sb.AppendLine();
+            sb.AppendLine("---");
+            sb.AppendLine();
+        }
+
+        await _historyService.SaveSessionAsync(_currentSessionId, _currentSessionTitle, sb.ToString());
     }
 }

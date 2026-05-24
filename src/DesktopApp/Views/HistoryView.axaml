@@ -1,7 +1,58 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DesktopApp.ViewModels"
+             xmlns:md="clr-namespace:Markdown.Avalonia;assembly=Markdown.Avalonia"
              x:Class="DesktopApp.Views.HistoryView"
              x:DataType="vm:HistoryViewModel">
-    <TextBlock Text="История (В разработке)" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" FontWeight="Bold" Foreground="#1A1C19"/>
+    <Grid ColumnDefinitions="300, 1, *">
+        <!-- Левая панель: Список сессий -->
+        <Border Grid.Column="0" Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+            <Grid RowDefinitions="Auto, *">
+                <TextBlock Grid.Row="0" Text="История чатов" FontSize="18" FontWeight="Bold" Margin="16,16,16,8" Foreground="#1A1C19"/>
+                
+                <ListBox Grid.Row="1" ItemsSource="{Binding Sessions}" SelectedItem="{Binding SelectedSession}" 
+                         Background="Transparent" BorderThickness="0" Margin="8,0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*, Auto" Margin="8,4">
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Foreground="#1A1C19"/>
+                                    <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" FontSize="12" Foreground="#666666" Margin="0,2,0,0"/>
+                                </StackPanel>
+                                
+                                <Button Grid.Column="1" Command="{Binding $parent[UserControl].((vm:HistoryViewModel)DataContext).DeleteSessionCommand}" 
+                                        CommandParameter="{Binding}" Background="Transparent" Padding="4" Margin="4,0,0,0" ToolTip.Tip="Удалить">
+                                    <PathIcon Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" 
+                                              Width="16" Height="16" Foreground="#D32F2F"/>
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+        
+        <!-- Разделитель -->
+        <GridSplitter Grid.Column="1" Background="#E0E0E0" ResizeDirection="Columns"/>
+        
+        <!-- Правая панель: Содержимое сессии -->
+        <Border Grid.Column="2" Background="White">
+            <Grid>
+                <TextBlock Text="Выберите сессию для просмотра" 
+                           IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNull}}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" 
+                           FontSize="16" Foreground="#999999"/>
+                           
+                <ScrollViewer IsVisible="{Binding SelectedSession, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <md:MarkdownScrollViewer Markdown="{Binding SelectedSessionContent}" Margin="24">
+                        <md:MarkdownScrollViewer.Styles>
+                            <Style Selector="TextBlock">
+                                <Setter Property="TextWrapping" Value="Wrap"/>
+                            </Style>
+                        </md:MarkdownScrollViewer.Styles>
+                    </md:MarkdownScrollViewer>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
 </UserControl>
