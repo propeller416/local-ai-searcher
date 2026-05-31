@@ -15,11 +15,9 @@ public sealed record LlamaConfig(
 
     public static LlamaConfig FromSettings(Application.Models.AppSettings settings, string? baseDirectory = null, int gpuLayerCount = 0)
     {
-        var root = baseDirectory ?? AppContext.BaseDirectory;
-        var modelsDir = Path.Combine(root, "models");
         return new LlamaConfig(
-            Path.Combine(modelsDir, settings.ChatModelFileName),
-            Path.Combine(modelsDir, settings.EmbedModelFileName),
+            Application.Helpers.AppPaths.ResolveModelPath(settings.ChatModelFileName),
+            Application.Helpers.AppPaths.ResolveModelPath(settings.EmbedModelFileName),
             ChatContextSize: 4096,
             EmbedContextSize: 2048,
             GpuLayerCount: gpuLayerCount,
