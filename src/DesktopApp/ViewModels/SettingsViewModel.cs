@@ -63,14 +63,33 @@ public partial class SettingsViewModel : ViewModelBase
     private void LoadAvailableModels()
     {
         AvailableModels.Clear();
-        var modelsDir = Path.Combine(AppContext.BaseDirectory, "models");
-        if (Directory.Exists(modelsDir))
+        var models = new System.Collections.Generic.HashSet<string>();
+
+        // 1. Проверяем встроенные модели
+        var bundledDir = Application.Helpers.AppPaths.GetBundledModelsDirectory();
+        if (Directory.Exists(bundledDir))
         {
-            var files = Directory.GetFiles(modelsDir, "*.gguf");
+            var files = Directory.GetFiles(bundledDir, "*.gguf");
             foreach (var file in files)
             {
-                AvailableModels.Add(Path.GetFileName(file));
+                models.Add(Path.GetFileName(file));
             }
+        }
+
+        // 2. Проверяем пользовательские модели
+        var userDir = Application.Helpers.AppPaths.GetUserModelsDirectory();
+        if (Directory.Exists(userDir))
+        {
+            var files = Directory.GetFiles(userDir, "*.gguf");
+            foreach (var file in files)
+            {
+                models.Add(Path.GetFileName(file));
+            }
+        }
+
+        foreach (var model in models.OrderBy(m => m))
+        {
+            AvailableModels.Add(model);
         }
     }
 

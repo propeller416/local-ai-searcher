@@ -21,7 +21,20 @@ public sealed class LlamaKernelHost : IDisposable
     private LLamaWeights? _embedWeights;
     private LLamaEmbedder? _embedder;
 
-    public LlamaKernelHost(LlamaConfig config) => _config = config;
+    public LlamaKernelHost(LlamaConfig config)
+    {
+        _config = config;
+        
+        if (OperatingSystem.IsMacOS())
+        {
+            try
+            {
+                // Дополнительно указываем LLamaSharp искать библиотеки в базовой директории
+                LLama.Native.NativeLibraryConfig.All.WithSearchDirectory(AppContext.BaseDirectory);
+            }
+            catch { }
+        }
+    }
 
     public Kernel Kernel
     {

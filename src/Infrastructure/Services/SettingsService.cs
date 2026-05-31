@@ -10,7 +10,7 @@ public class SettingsService : ISettingsService
 
     public SettingsService()
     {
-        _settingsFilePath = Path.Combine(AppContext.BaseDirectory, "settings.json");
+        _settingsFilePath = Application.Helpers.AppPaths.GetSettingsFilePath();
     }
 
     public AppSettings LoadSettings()

@@ -13,13 +13,7 @@ public class HistoryService : IHistoryService
 
     public HistoryService()
     {
-        var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        _historyDirectory = Path.Combine(appDirectory, "history");
-        
-        if (!Directory.Exists(_historyDirectory))
-        {
-            Directory.CreateDirectory(_historyDirectory);
-        }
+        _historyDirectory = Application.Helpers.AppPaths.GetHistoryDirectory();
     }
 
     public async Task SaveSessionAsync(string sessionId, string title, string content)

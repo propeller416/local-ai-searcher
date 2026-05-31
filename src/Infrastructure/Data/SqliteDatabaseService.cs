@@ -19,11 +19,35 @@ public class SqliteDatabaseService : IDatabaseService
         }.ToString();
     }
 
+    private string GetVecExtensionPath()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        var ext = OperatingSystem.IsWindows() ? "dll" : OperatingSystem.IsMacOS() ? "dylib" : "so";
+        
+        var possiblePaths = new[]
+        {
+            Path.Combine(baseDir, $"vec0.{ext}"),
+            Path.Combine(baseDir, "runtimes", "osx-arm64", "native", $"vec0.{ext}"),
+            Path.Combine(baseDir, "runtimes", "osx-x64", "native", $"vec0.{ext}"),
+            Path.Combine(baseDir, "runtimes", "win-x64", "native", $"vec0.{ext}"),
+            Path.Combine(baseDir, "runtimes", "linux-x64", "native", $"vec0.{ext}"),
+            Path.Combine(baseDir, "runtimes", "linux-arm64", "native", $"vec0.{ext}")
+        };
+
+        foreach (var path in possiblePaths)
+        {
+            if (File.Exists(path))
+                return path;
+        }
+
+        return "vec0";
+    }
+
     public async Task InitializeAsync()
     {
         _persistentConnection = new SqliteConnection(_connectionString);
         await _persistentConnection.OpenAsync();
-        _persistentConnection.LoadExtension("vec0");
+        _persistentConnection.LoadExtension(GetVecExtensionPath());
 
         // Загружаем расширение vec0 для векторного поиска
         
@@ -70,7 +94,7 @@ public class SqliteDatabaseService : IDatabaseService
         
         if (loadVecExtension)
         {
-            connection.LoadExtension("vec0");
+            connection.LoadExtension(GetVecExtensionPath());
         }
         
         return connection;

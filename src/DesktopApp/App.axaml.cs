@@ -34,8 +34,12 @@ public partial class App : Avalonia.Application
         
         services.AddLogging(configure => configure.AddConsole());
 
+        // Initialize App Paths
+        Application.Helpers.AppPaths.EnsureDirectoriesExist();
+
         // Register Database Service
-        services.AddSingleton<SqliteDatabaseService>(sp => new SqliteDatabaseService("local_ai_searcher.db"));
+        var dbPath = Application.Helpers.AppPaths.GetDatabasePath();
+        services.AddSingleton<SqliteDatabaseService>(sp => new SqliteDatabaseService(dbPath));
         services.AddSingleton<IDatabaseService>(sp => sp.GetRequiredService<SqliteDatabaseService>());
 
         services.AddLlamaAndSemanticKernelServices();

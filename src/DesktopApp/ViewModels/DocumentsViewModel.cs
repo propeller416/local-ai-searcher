@@ -57,12 +57,8 @@ public partial class DocumentsViewModel : ViewModelBase
 
         try
         {
-            var appDataPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "documents");
-            if (!System.IO.Directory.Exists(appDataPath))
-            {
-                System.IO.Directory.CreateDirectory(appDataPath);
-            }
-
+            var appDataPath = Application.Helpers.AppPaths.GetDocumentsDirectory();
+            
             foreach (var filePath in files)
             {
                 var fileInfo = new System.IO.FileInfo(filePath);
